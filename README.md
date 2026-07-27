@@ -14,6 +14,10 @@ It also includes an interactive origin pin that visualizes which destinations ca
 
 ---
 
+## Launch the Atlas
+
+[Open the Hyades Planet Atlas](https://sarafanunin.github.io/Hyades-Planet-Atlas/)
+
 ## What Is a Type I Gate?
 
 A **Type I Gate** is a portal that obeys conservation of energy.
