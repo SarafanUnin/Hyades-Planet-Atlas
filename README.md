@@ -2,6 +2,8 @@
 
 An interactive browser-based globe for exploring planetary surface imagery, points of interest, routes, and the energy constraints of fictional **Type I Gates**.
 
+![Hyades Planet Atlas Screenshot](docs/screenshot.png)
+
 The atlas currently supports multiple planets and provides three surface layers:
 
 - true-color imagery
