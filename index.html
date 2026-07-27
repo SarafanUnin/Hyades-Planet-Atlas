@@ -1,0 +1,2943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyades Planet Atlas</title>
+
+<style>
+
+html, body
+{
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+canvas
+{
+    display: block;
+}
+
+#controls-panel
+{
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 20;
+
+    width: 250px;
+    padding: 14px;
+
+    color: #f3f6fa;
+    background: rgba(8, 12, 18, 0.84);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+
+    user-select: none;
+}
+
+#controls-title
+{
+    margin-bottom: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.control-group
+{
+    margin-top: 11px;
+}
+
+.control-group:first-of-type
+{
+    margin-top: 0;
+}
+
+.control-label
+{
+    display: block;
+    margin-bottom: 5px;
+
+    color: #b9c4d0;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+#controls-panel select,
+#controls-panel button
+{
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 9px;
+
+    color: #f3f6fa;
+    background: rgba(25, 32, 43, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    border-radius: 5px;
+
+    font: inherit;
+}
+
+#controls-panel select:disabled,
+#controls-panel button:disabled
+{
+    cursor: wait;
+    opacity: 0.55;
+}
+
+#controls-panel button
+{
+    cursor: pointer;
+}
+
+#controls-panel button:hover:not(:disabled)
+{
+    background: rgba(42, 53, 69, 0.98);
+}
+
+.checkbox-row
+{
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    min-height: 32px;
+    color: #e7edf4;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.checkbox-row input
+{
+    width: 17px;
+    height: 17px;
+    margin: 0;
+}
+
+#loading-status
+{
+    min-height: 1.2em;
+    margin-top: 10px;
+
+    color: #9eabb8;
+    font-size: 0.78rem;
+}
+
+
+#poi-layer
+{
+    position: fixed;
+    inset: 0;
+    z-index: 12;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+#poi-route-canvas
+{
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.poi-label
+{
+    position: absolute;
+
+    /*
+        The element origin is the exact projected latitude/longitude.
+        The dot is centered on that origin; the text extends to the right.
+    */
+    width: 0;
+    height: 0;
+
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1;
+
+    text-shadow:
+        -1px -1px 0 #000,
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0 2px 2px rgba(0,0,0,0.75);
+
+    user-select: none;
+}
+
+.poi-dot
+{
+    position: absolute;
+    left: 0;
+    top: 0;
+
+    width: 8px;
+    height: 8px;
+
+    transform: translate(-50%, -50%);
+
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.poi-text
+{
+    position: absolute;
+    left: 7px;
+    top: 0;
+
+    transform: translateY(-50%);
+    white-space: nowrap;
+}
+
+#credits-panel
+{
+    position: fixed;
+    right: 14px;
+    bottom: 14px;
+    z-index: 18;
+
+    max-width: min(440px, calc(100vw - 28px));
+
+    color: #f3f6fa;
+    background: rgba(8, 12, 18, 0.84);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+    backdrop-filter: blur(5px);
+
+    font-size: 0.78rem;
+    line-height: 1.35;
+
+    user-select: none;
+}
+
+#credits-summary
+{
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 7px 9px;
+    cursor: pointer;
+    list-style: none;
+}
+
+#credits-summary::-webkit-details-marker
+{
+    display: none;
+}
+
+#credits-summary::before
+{
+    content: "▸";
+    display: inline-block;
+    width: 0.9em;
+    transform-origin: 45% 50%;
+    transition: transform 120ms ease;
+}
+
+#credits-panel[open] #credits-summary::before
+{
+    transform: rotate(90deg);
+}
+
+#credits-content
+{
+    box-sizing: border-box;
+    max-height: min(50vh, 520px);
+    overflow: auto;
+
+    padding: 0 10px 10px 10px;
+
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    user-select: text;
+}
+
+#credits-content a
+{
+    color: #b9d7ff;
+    text-decoration: underline;
+}
+
+#credits-content a:hover
+{
+    color: #fff;
+}
+
+#hud
+{
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 10;
+
+    min-width: 260px;
+    padding: 12px 14px;
+
+    color: #f3f6fa;
+    background: rgba(8, 12, 18, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    backdrop-filter: blur(5px);
+
+    pointer-events: none;
+    user-select: none;
+}
+
+#hud-title
+{
+    margin-bottom: 6px;
+    font-weight: 650;
+}
+
+#hud-instruction
+{
+    margin-bottom: 8px;
+    color: #b9c4d0;
+    font-size: 0.88rem;
+}
+
+.hud-row
+{
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    font-variant-numeric: tabular-nums;
+}
+
+.hud-label
+{
+    color: #9eabb8;
+}
+
+.hud-value
+{
+    color: #fff;
+}
+
+</style>
+
+<script type="importmap">
+{
+    "imports":
+    {
+        "three":
+            "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+
+        "three/addons/":
+            "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+}
+</script>
+
+</head>
+
+<body>
+
+<div id="controls-panel">
+    <div id="controls-title">Planet Atlas</div>
+
+    <div class="control-group">
+        <label class="control-label" for="planet-select">
+            Planet
+        </label>
+
+        <select id="planet-select">
+            <option value="earth">Earth</option>
+            <option value="mars">Mars</option>
+            <option value="cleeia">Cleeia</option>
+            <option value="synecho">Synecho</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label class="control-label" for="layer-select">
+            Surface layer
+        </label>
+
+        <select id="layer-select">
+            <option value="trueColor">True color</option>
+            <option value="contours">Black-and-white contours</option>
+            <option value="isoenergetic">Isoenergetic rainbow</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label class="control-label" for="gate-type-select">
+            Gate type
+        </label>
+
+        <select id="gate-type-select">
+            <option value="typeIb">Type I(b) — thermal</option>
+            <option value="typeIa">Type I(a) — mechanical match</option>
+        </select>
+    </div>
+
+    <div class="control-group">
+        <label class="checkbox-row">
+            <input id="ocean-energy-toggle" type="checkbox">
+            <span>Show ocean energy</span>
+        </label>
+    </div>
+
+    <div class="control-group">
+        <label class="checkbox-row">
+            <input id="poi-toggle" type="checkbox">
+            <span>Show points of interest</span>
+        </label>
+    </div>
+
+    <div class="control-group">
+        <button id="reset-view-button" type="button">
+            Reset view
+        </button>
+    </div>
+
+    <div id="loading-status" aria-live="polite"></div>
+</div>
+
+
+<div id="poi-layer" aria-hidden="true"><canvas id="poi-route-canvas"></canvas></div>
+
+<details id="credits-panel">
+    <summary id="credits-summary">
+        Imagery &amp; data credits
+    </summary>
+
+    <div id="credits-content">
+        Loading credits…
+    </div>
+</details>
+
+<div id="hud">
+    <div id="hud-title">Earth Energy-Raster ΔT Layer</div>
+    <div id="hud-instruction">
+        Loading Earth energy raster…
+    </div>
+
+    <div class="hud-row">
+        <span class="hud-label">Origin latitude</span>
+        <span class="hud-value" id="origin-latitude">—</span>
+    </div>
+
+    <div class="hud-row">
+        <span class="hud-label">Origin longitude</span>
+        <span class="hud-value" id="origin-longitude">—</span>
+    </div>
+
+    <div class="hud-row">
+        <span class="hud-label">Origin energy</span>
+        <span class="hud-value" id="origin-energy">—</span>
+    </div>
+
+    <div class="hud-row">
+        <span class="hud-label">Cursor ΔT</span>
+        <span class="hud-value" id="cursor-delta-energy">—</span>
+    </div>
+</div>
+
+<script type="module">
+
+import * as THREE from "three";
+
+import { OrbitControls } from
+    "three/addons/controls/OrbitControls.js";
+
+//////////////////////////////////////////////////////////////
+// Scene
+//////////////////////////////////////////////////////////////
+
+const scene = new THREE.Scene();
+
+//////////////////////////////////////////////////////////////
+// Camera
+//////////////////////////////////////////////////////////////
+
+const camera = new THREE.PerspectiveCamera(
+    45,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+
+camera.position.z = 3;
+
+//////////////////////////////////////////////////////////////
+// Renderer
+//////////////////////////////////////////////////////////////
+
+const renderer = new THREE.WebGLRenderer(
+{
+    antialias: true
+});
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+);
+
+renderer.domElement.style.touchAction = "none";
+
+document.body.appendChild(renderer.domElement);
+
+//////////////////////////////////////////////////////////////
+// Controls
+//////////////////////////////////////////////////////////////
+
+const controls = new OrbitControls(
+    camera,
+    renderer.domElement
+);
+
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+
+controls.enablePan = false;
+
+controls.minDistance = 1.4;
+controls.maxDistance = 8;
+
+controls.rotateSpeed = 0.6;
+controls.zoomSpeed = 0.8;
+
+//////////////////////////////////////////////////////////////
+// Lighting
+//////////////////////////////////////////////////////////////
+
+scene.add(
+    new THREE.AmbientLight(0xffffff, 1.5)
+);
+
+const sun =
+    new THREE.DirectionalLight(0xffffff, 2);
+
+sun.position.set(5, 2, 5);
+
+scene.add(sun);
+
+//////////////////////////////////////////////////////////////
+// Globe
+//////////////////////////////////////////////////////////////
+
+const loader =
+    new THREE.TextureLoader();
+
+/*
+    Rename or reorganize files here without changing the rest of the atlas.
+
+    Expected energy files inside each dataBaseUrl:
+
+        total_energy_j_per_kg.json
+        total_energy_j_per_kg.f32
+*/
+
+function linkifyCreditsText(
+    rawText
+)
+{
+    const escaped =
+        rawText
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+    return escaped.replace(
+        /(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+    );
+}
+
+async function loadCredits()
+{
+    const creditsContent =
+        document.getElementById(
+            "credits-content"
+        );
+
+    try
+    {
+        const response =
+            await fetch(
+                "data/credits.txt"
+            );
+
+        if (!response.ok)
+        {
+            throw new Error(
+                response.status +
+                " " +
+                response.statusText
+            );
+        }
+
+        const rawText =
+            await response.text();
+
+        creditsContent.innerHTML =
+            linkifyCreditsText(
+                rawText.trim()
+            );
+    }
+    catch (error)
+    {
+        creditsContent.textContent =
+            "Credits file could not be loaded.";
+
+        console.warn(
+            "Could not load data/credits.txt:",
+            error
+        );
+    }
+}
+
+loadCredits();
+
+const PLANETS =
+{
+    earth:
+    {
+        label: "Earth",
+        dataBaseUrl: "data/earth/",
+        poiFile: "data/earth/POI.txt",
+        textures:
+        {
+            trueColor: "textures/earth/true_color.jpg",
+            contours: "textures/earth/contours.png",
+            isoenergetic: "textures/earth/isoenergetic.png"
+        }
+    },
+
+    mars:
+    {
+        label: "Mars",
+        dataBaseUrl: "data/mars/",
+        poiFile: "data/mars/POI.txt",
+        textures:
+        {
+            trueColor: "textures/mars/true_color.png",
+            contours: "textures/mars/contours.png",
+            isoenergetic: "textures/mars/isoenergetic.png"
+        }
+    },
+
+    cleeia:
+    {
+        label: "Cleeia",
+        dataBaseUrl: "data/cleeia/",
+        poiFile: "data/cleeia/POI.txt",
+        textures:
+        {
+            trueColor: "textures/cleeia/true_color.png",
+            contours: "textures/cleeia/contours.png",
+            isoenergetic: "textures/cleeia/isoenergetic.png"
+        }
+    },
+
+    synecho:
+    {
+        label: "Synecho",
+        dataBaseUrl: "data/synecho/",
+        poiFile: "data/synecho/POI.txt",
+        textures:
+        {
+            trueColor: "textures/synecho/true_color.png",
+            contours: "textures/synecho/contours.png",
+            isoenergetic: "textures/synecho/isoenergetic.png"
+        }
+    }
+};
+
+const DEFAULT_PLANET_KEY =
+    "earth";
+
+const DEFAULT_LAYER_KEY =
+    "trueColor";
+
+const DEFAULT_CAMERA_POSITION =
+    new THREE.Vector3(0, 0, 3);
+
+const SPECIFIC_HEAT_J_PER_KG_K =
+    2500.0;
+
+/*
+    Type I(a) visualization tolerance. This is a map-level approximation
+    of a near mechanical-energy match.
+*/
+const TYPE_IA_TOLERANCE_C =
+    0.01;
+
+/*
+    Signed raster convention:
+
+        positive value = above-sea-level source cell
+        negative value = sea-level-clamped ocean/source cell
+        abs(value)     = stored specific energy
+*/
+
+function latitudeLongitudeToLocalPoint(
+    latitudeDeg,
+    longitudeDeg
+)
+{
+    const latitude =
+        THREE.MathUtils.degToRad(latitudeDeg);
+
+    const longitude =
+        THREE.MathUtils.degToRad(longitudeDeg);
+
+    const cosLatitude =
+        Math.cos(latitude);
+
+    return new THREE.Vector3(
+        cosLatitude * Math.cos(longitude),
+        Math.sin(latitude),
+        -cosLatitude * Math.sin(longitude)
+    );
+}
+
+function parseCoordinateToken(
+    token,
+    positiveHemisphere,
+    negativeHemisphere
+)
+{
+    const trimmed =
+        token.trim();
+
+    const match =
+        trimmed.match(
+            /^([+-]?[0-9.]+)\s*([NSEW])$/i
+        );
+
+    if (!match)
+    {
+        throw new Error(
+            "Invalid coordinate token: " +
+            token
+        );
+    }
+
+    const rawNumber =
+        match[1];
+
+    const firstDecimal =
+        rawNumber.indexOf(".");
+
+    const normalizedNumber =
+        firstDecimal < 0
+            ? rawNumber
+            : rawNumber.slice(0, firstDecimal + 1) +
+              rawNumber.slice(firstDecimal + 1).replace(/\./g, "");
+
+    const magnitude =
+        Number(normalizedNumber);
+
+    if (!Number.isFinite(magnitude))
+    {
+        throw new Error(
+            "Invalid numeric coordinate: " +
+            token
+        );
+    }
+
+    const hemisphere =
+        match[2].toUpperCase();
+
+    if (
+        hemisphere !== positiveHemisphere &&
+        hemisphere !== negativeHemisphere
+    )
+    {
+        throw new Error(
+            "Unexpected hemisphere in coordinate: " +
+            token
+        );
+    }
+
+    return hemisphere === negativeHemisphere
+        ? -Math.abs(magnitude)
+        : Math.abs(magnitude);
+}
+
+function parsePoiText(
+    text
+)
+{
+    const entries = [];
+
+    const lines =
+        text.split(/\r?\n/);
+
+    for (
+        let lineIndex = 0;
+        lineIndex < lines.length;
+        lineIndex += 1
+    )
+    {
+        const line =
+            lines[lineIndex].trim();
+
+        if (
+            line === "" ||
+            line.startsWith("#")
+        )
+        {
+            continue;
+        }
+
+        const parts =
+            line.split("/").map(
+                part => part.trim()
+            );
+
+        if (
+            parts.length < 3 ||
+            (parts.length - 1) % 2 !== 0
+        )
+        {
+            console.warn(
+                "Skipping malformed POI line " +
+                (lineIndex + 1) +
+                ": " +
+                line
+            );
+
+            continue;
+        }
+
+        try
+        {
+            const waypoints = [];
+
+            for (
+                let index = 1;
+                index < parts.length;
+                index += 2
+            )
+            {
+                const latitudeDeg =
+                    parseCoordinateToken(
+                        parts[index],
+                        "N",
+                        "S"
+                    );
+
+                const longitudeDeg =
+                    parseCoordinateToken(
+                        parts[index + 1],
+                        "E",
+                        "W"
+                    );
+
+                waypoints.push(
+                {
+                    latitudeDeg,
+                    longitudeDeg,
+                    localPoint:
+                        latitudeLongitudeToLocalPoint(
+                            latitudeDeg,
+                            longitudeDeg
+                        )
+                });
+            }
+
+            entries.push(
+            {
+                name: parts[0],
+                waypoints,
+                isRoute:
+                    waypoints.length > 1
+            });
+        }
+        catch (error)
+        {
+            console.warn(
+                "Skipping malformed POI line " +
+                (lineIndex + 1) +
+                ": " +
+                error.message
+            );
+        }
+    }
+
+    return entries;
+}
+
+async function loadPoiFile(url)
+{
+    const response = await fetch(url);
+
+    if (!response.ok)
+    {
+        if (response.status === 404)
+        {
+            return [];
+        }
+
+        throw new Error(
+            "Could not load POI file: " +
+            response.status + " " + response.statusText
+        );
+    }
+
+    return parsePoiText(await response.text());
+}
+
+async function loadEnergyRaster(
+    baseUrl
+)
+{
+    const metadataResponse =
+        await fetch(
+            baseUrl +
+            "total_energy_j_per_kg.json"
+        );
+
+    if (!metadataResponse.ok)
+    {
+        throw new Error(
+            "Could not load energy metadata: " +
+            metadataResponse.status +
+            " " +
+            metadataResponse.statusText
+        );
+    }
+
+    const metadata =
+        await metadataResponse.json();
+
+    const width =
+        Number(
+            metadata.width ??
+            metadata.shape?.[1]
+        );
+
+    const height =
+        Number(
+            metadata.height ??
+            metadata.shape?.[0]
+        );
+
+    if (
+        !Number.isInteger(width) ||
+        !Number.isInteger(height) ||
+        width <= 0 ||
+        height <= 0
+    )
+    {
+        throw new Error(
+            "Energy metadata must provide width/height " +
+            "or shape: [height, width]."
+        );
+    }
+
+    if (
+        metadata.endianness &&
+        metadata.endianness !== "little"
+    )
+    {
+        throw new Error(
+            "Only little-endian float32 rasters are supported."
+        );
+    }
+
+    const rasterFile =
+        metadata.file ??
+        "total_energy_j_per_kg.f32";
+
+    const rasterResponse =
+        await fetch(
+            baseUrl +
+            rasterFile
+        );
+
+    if (!rasterResponse.ok)
+    {
+        throw new Error(
+            "Could not load energy raster: " +
+            rasterResponse.status +
+            " " +
+            rasterResponse.statusText
+        );
+    }
+
+    const buffer =
+        await rasterResponse.arrayBuffer();
+
+    const expectedBytes =
+        width *
+        height *
+        Float32Array.BYTES_PER_ELEMENT;
+
+    if (buffer.byteLength !== expectedBytes)
+    {
+        throw new Error(
+            "Energy raster has " +
+            buffer.byteLength +
+            " bytes; expected " +
+            expectedBytes +
+            "."
+        );
+    }
+
+    const values =
+        new Float32Array(
+            buffer
+        );
+
+    const texture =
+        new THREE.DataTexture(
+            values,
+            width,
+            height,
+            THREE.RedFormat,
+            THREE.FloatType
+        );
+
+    /*
+        The raster is stored north-to-south, west-to-east. We calculate its
+        sampling coordinates explicitly, so no image-style flip is needed.
+    */
+    texture.flipY = false;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
+
+    /*
+        Nearest filtering avoids depending on float-linear-filter support.
+        At 1440 x 720 this is already fine for the first real-data test.
+    */
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+    texture.generateMipmaps = false;
+    texture.needsUpdate = true;
+
+    return {
+        metadata,
+        width,
+        height,
+        values,
+        texture
+    };
+}
+
+function loadSurfaceTexture(
+    url
+)
+{
+    return loader.loadAsync(
+        url
+    ).then(
+        texture =>
+        {
+            texture.colorSpace =
+                THREE.SRGBColorSpace;
+
+            texture.wrapS =
+                THREE.RepeatWrapping;
+
+            texture.wrapT =
+                THREE.ClampToEdgeWrapping;
+
+            return texture;
+        }
+    );
+}
+
+let currentPlanetKey =
+    DEFAULT_PLANET_KEY;
+
+let currentLayerKey =
+    DEFAULT_LAYER_KEY;
+
+let energyRaster;
+
+let surfaceTexture;
+
+let currentPointsOfInterest = [];
+
+try
+{
+    const initialConfig =
+        PLANETS[currentPlanetKey];
+
+    [
+        energyRaster,
+        surfaceTexture,
+        currentPointsOfInterest
+    ] =
+        await Promise.all(
+        [
+            loadEnergyRaster(
+                initialConfig.dataBaseUrl
+            ),
+
+            loadSurfaceTexture(
+                initialConfig.textures[
+                    currentLayerKey
+                ]
+            ),
+
+            loadPoiFile(
+                initialConfig.poiFile
+            )
+        ]
+    );
+
+    document.getElementById(
+        "hud-instruction"
+    ).textContent =
+        "Click the globe to place the origin. Click empty space to clear it.";
+}
+catch (error)
+{
+    console.error(error);
+
+    document.getElementById(
+        "hud-instruction"
+    ).textContent =
+        "Initial atlas assets failed to load. See browser console.";
+
+    throw error;
+}
+
+const geometry =
+    new THREE.SphereGeometry(
+        1,
+        128,
+        64
+    );
+
+/*
+    The base texture remains a normal MeshStandardMaterial. We inject a
+    synthetic scalar-field overlay into its shader so the layer can later be
+    replaced with a sampled total-energy texture without changing the pin/UI
+    state model.
+*/
+const energyUniforms =
+{
+    layerActive:
+    {
+        value: 0.0
+    },
+
+    energyTexture:
+    {
+        value: energyRaster.texture
+    },
+
+    originEnergy:
+    {
+        value: 0.0
+    },
+
+    showOceanEnergy:
+    {
+        value: 0.0
+    },
+
+    /*
+        0.0 = Type I(b) thermal display
+        1.0 = Type I(a) near-match display
+    */
+    gateType:
+    {
+        value: 0.0
+    },
+
+    typeIaTolerance:
+    {
+        value: TYPE_IA_TOLERANCE_C
+    },
+
+    specificHeat:
+    {
+        value: SPECIFIC_HEAT_J_PER_KG_K
+    },
+
+    /*
+        The visible overlay is restricted to the physiological safety band.
+        Outside this interval, only the ordinary surface texture remains.
+    */
+    coldThreshold:
+    {
+        value: -2.0
+    },
+
+    hotThreshold:
+    {
+        value: 1.5
+    },
+
+    overlayOpacity:
+    {
+        value: 0.82
+    }
+};
+
+const material =
+    new THREE.MeshStandardMaterial(
+    {
+        map: surfaceTexture
+    });
+
+material.onBeforeCompile =
+    shader =>
+    {
+        shader.uniforms.layerActive =
+            energyUniforms.layerActive;
+
+        shader.uniforms.energyTexture =
+            energyUniforms.energyTexture;
+
+        shader.uniforms.originEnergy =
+            energyUniforms.originEnergy;
+
+        shader.uniforms.showOceanEnergy =
+            energyUniforms.showOceanEnergy;
+
+        shader.uniforms.gateType =
+            energyUniforms.gateType;
+
+        shader.uniforms.typeIaTolerance =
+            energyUniforms.typeIaTolerance;
+
+        shader.uniforms.specificHeat =
+            energyUniforms.specificHeat;
+
+        shader.uniforms.coldThreshold =
+            energyUniforms.coldThreshold;
+
+        shader.uniforms.hotThreshold =
+            energyUniforms.hotThreshold;
+
+        shader.uniforms.overlayOpacity =
+            energyUniforms.overlayOpacity;
+
+        shader.vertexShader =
+            shader.vertexShader.replace(
+                "#include <common>",
+                `
+                #include <common>
+
+                varying vec3 vAtlasLocalPosition;
+                `
+            );
+
+        shader.vertexShader =
+            shader.vertexShader.replace(
+                "#include <begin_vertex>",
+                `
+                #include <begin_vertex>
+
+                vAtlasLocalPosition = normalize(position);
+                `
+            );
+
+        shader.fragmentShader =
+            shader.fragmentShader.replace(
+                "#include <common>",
+                `
+                #include <common>
+
+                varying vec3 vAtlasLocalPosition;
+
+                uniform float layerActive;
+                uniform sampler2D energyTexture;
+                uniform float originEnergy;
+                uniform float showOceanEnergy;
+                uniform float gateType;
+                uniform float typeIaTolerance;
+                uniform float specificHeat;
+                uniform float coldThreshold;
+                uniform float hotThreshold;
+                uniform float overlayOpacity;
+
+                vec2 energyUvFromLocalPoint(vec3 p)
+                {
+                    p = normalize(p);
+
+                    float longitude =
+                        atan(-p.z, p.x);
+
+                    float latitude =
+                        asin(
+                            clamp(
+                                p.y,
+                                -1.0,
+                                1.0
+                            )
+                        );
+
+                    /*
+                        u: west (-180°) to east (+180°)
+                        v: north (+90°) to south (-90°)
+
+                        The raster's first row is therefore sampled at v = 0.
+                    */
+                    return vec2(
+                        (longitude + PI) /
+                            (2.0 * PI),
+
+                        (0.5 * PI - latitude) /
+                            PI
+                    );
+                }
+
+                float storedEnergyAtLocalPoint(
+                    vec3 p
+                )
+                {
+                    return texture2D(
+                        energyTexture,
+                        energyUvFromLocalPoint(p)
+                    ).r;
+                }
+
+                vec3 relativeEnergyColor(float deltaT)
+                {
+                    /*
+                        Only the physiologically relevant safe interval is
+                        colored:
+
+                            coldThreshold <= deltaT <= hotThreshold
+
+                        Outside that interval, the overlay opacity is set to
+                        zero elsewhere in the fragment shader.
+                    */
+
+                    vec3 zeroColor =
+                        vec3(0.012, 0.012, 0.016);
+
+                    float coldAmount =
+                        clamp(
+                            deltaT / coldThreshold,
+                            0.0,
+                            1.0
+                        );
+
+                    float hotAmount =
+                        clamp(
+                            deltaT / hotThreshold,
+                            0.0,
+                            1.0
+                        );
+
+                    vec3 coldColor =
+                        mix(
+                            vec3(0.0, 0.025, 0.16),
+                            vec3(0.04, 0.42, 1.0),
+                            coldAmount
+                        );
+
+                    vec3 hotColor =
+                        mix(
+                            vec3(0.16, 0.005, 0.005),
+                            vec3(1.0, 0.055, 0.02),
+                            hotAmount
+                        );
+
+                    float signedAmount =
+                        deltaT < 0.0
+                            ? coldAmount
+                            : hotAmount;
+
+                    vec3 signedColor =
+                        deltaT < 0.0
+                            ? coldColor
+                            : hotColor;
+
+                    return mix(
+                        zeroColor,
+                        signedColor,
+                        smoothstep(0.0, 0.06, signedAmount)
+                    );
+                }
+                `
+            );
+
+        shader.fragmentShader =
+            shader.fragmentShader.replace(
+                "#include <dithering_fragment>",
+                `
+                if (layerActive > 0.5)
+                {
+                    float encodedDestinationEnergy =
+                        storedEnergyAtLocalPoint(
+                            vAtlasLocalPosition
+                        );
+
+                    bool destinationIsOcean =
+                        encodedDestinationEnergy < 0.0;
+
+                    float destinationEnergy =
+                        abs(
+                            encodedDestinationEnergy
+                        );
+
+                    /*
+                        Positive means the trip releases mechanical energy,
+                        which a Type I(b) Gate deposits as heat.
+
+                        The sign bit is only an ocean marker. Energy
+                        calculations always use the decoded magnitude.
+                    */
+                    float releasedEnergy =
+                        abs(originEnergy) -
+                        destinationEnergy;
+
+                    float deltaT =
+                        releasedEnergy /
+                        specificHeat;
+
+                    bool typeIaActive =
+                        gateType > 0.5;
+
+                    /*
+                        Type I(b) retains the existing thermal allowance layer.
+
+                        Type I(a) highlights only destinations whose equivalent
+                        thermal difference is within ±0.01 °C of the origin.
+                        This is a visualization of a near energy match, not a
+                        guarantee of complete momentum-state compatibility.
+                    */
+                    vec3 overlayColor =
+                        typeIaActive
+                            ? vec3(1.0, 0.92, 0.0)
+                            : relativeEnergyColor(
+                                deltaT
+                            );
+
+                    float insideTypeIbBand =
+                        step(
+                            coldThreshold,
+                            deltaT
+                        ) *
+                        step(
+                            deltaT,
+                            hotThreshold
+                        );
+
+                    float insideTypeIaBand =
+                        step(
+                            abs(deltaT),
+                            typeIaTolerance
+                        );
+
+                    float gateBandVisible =
+                        typeIaActive
+                            ? insideTypeIaBand
+                            : insideTypeIbBand;
+
+                    float oceanVisible =
+                        (
+                            showOceanEnergy > 0.5 ||
+                            !destinationIsOcean
+                        )
+                            ? 1.0
+                            : 0.0;
+
+                    float gateOpacity =
+                        typeIaActive
+                            ? 1.0
+                            : overlayOpacity;
+
+                    float localOverlayOpacity =
+                        gateOpacity *
+                        gateBandVisible *
+                        oceanVisible;
+
+                    gl_FragColor.rgb =
+                        mix(
+                            gl_FragColor.rgb,
+                            overlayColor,
+                            localOverlayOpacity
+                        );
+                }
+
+                #include <dithering_fragment>
+                `
+            );
+    };
+
+material.customProgramCacheKey =
+    () => "atlas-multi-planet-gate-types-routes-credits-v11";
+
+const globe =
+    new THREE.Mesh(
+        geometry,
+        material
+    );
+
+scene.add(globe);
+
+//////////////////////////////////////////////////////////////
+// Atlas controls and asset swapping
+//////////////////////////////////////////////////////////////
+
+const planetSelect =
+    document.getElementById(
+        "planet-select"
+    );
+
+const layerSelect =
+    document.getElementById(
+        "layer-select"
+    );
+
+const gateTypeSelect =
+    document.getElementById(
+        "gate-type-select"
+    );
+
+const oceanEnergyToggle =
+    document.getElementById(
+        "ocean-energy-toggle"
+    );
+
+const poiToggle =
+    document.getElementById(
+        "poi-toggle"
+    );
+
+const poiLayer =
+    document.getElementById(
+        "poi-layer"
+    );
+
+const poiRouteCanvas =
+    document.getElementById(
+        "poi-route-canvas"
+    );
+
+const poiRouteContext =
+    poiRouteCanvas.getContext(
+        "2d"
+    );
+
+const resetViewButton =
+    document.getElementById(
+        "reset-view-button"
+    );
+
+const loadingStatusElement =
+    document.getElementById(
+        "loading-status"
+    );
+
+planetSelect.value =
+    currentPlanetKey;
+
+layerSelect.value =
+    currentLayerKey;
+
+gateTypeSelect.value =
+    "typeIb";
+
+oceanEnergyToggle.checked =
+    false;
+
+poiToggle.checked =
+    false;
+
+let atlasLoadGeneration =
+    0;
+
+function setAtlasControlsDisabled(
+    disabled
+)
+{
+    planetSelect.disabled =
+        disabled;
+
+    layerSelect.disabled =
+        disabled;
+
+    gateTypeSelect.disabled =
+        disabled;
+
+    oceanEnergyToggle.disabled =
+        disabled;
+
+    poiToggle.disabled =
+        disabled;
+
+    resetViewButton.disabled =
+        disabled;
+}
+
+function rebuildPoiLabels()
+{
+    for (
+        const child of
+        Array.from(
+            poiLayer.children
+        )
+    )
+    {
+        if (
+            child !==
+            poiRouteCanvas
+        )
+        {
+            child.remove();
+        }
+    }
+
+    for (
+        const entry of
+        currentPointsOfInterest
+    )
+    {
+        for (
+            let index = 0;
+            index < entry.waypoints.length;
+            index += 1
+        )
+        {
+            const waypoint =
+                entry.waypoints[index];
+
+            const label =
+                document.createElement(
+                    "div"
+                );
+
+            label.className =
+                "poi-label";
+
+            const dot =
+                document.createElement(
+                    "span"
+                );
+
+            dot.className =
+                "poi-dot";
+
+            label.appendChild(
+                dot
+            );
+
+            const routeLabelIndex =
+                Math.floor(
+                    entry.waypoints.length /
+                    2
+                );
+
+            const shouldLabel =
+                !entry.isRoute ||
+                index ===
+                    routeLabelIndex;
+
+            if (shouldLabel)
+            {
+                const name =
+                    document.createElement(
+                        "span"
+                    );
+
+                name.className =
+                    "poi-text";
+
+                name.textContent =
+                    entry.name;
+
+                label.appendChild(
+                    name
+                );
+            }
+
+            waypoint.element =
+                label;
+
+            poiLayer.appendChild(
+                label
+            );
+        }
+    }
+
+    updatePoiVisibility();
+}
+
+function updatePoiVisibility()
+{
+    poiLayer.style.display =
+        poiToggle.checked
+            ? "block"
+            : "none";
+}
+
+function resizePoiRouteCanvas()
+{
+    const pixelRatio =
+        Math.min(
+            window.devicePixelRatio,
+            2
+        );
+
+    poiRouteCanvas.width =
+        Math.round(
+            window.innerWidth *
+            pixelRatio
+        );
+
+    poiRouteCanvas.height =
+        Math.round(
+            window.innerHeight *
+            pixelRatio
+        );
+
+    poiRouteCanvas.style.width =
+        window.innerWidth +
+        "px";
+
+    poiRouteCanvas.style.height =
+        window.innerHeight +
+        "px";
+
+    poiRouteContext.setTransform(
+        pixelRatio,
+        0,
+        0,
+        pixelRatio,
+        0,
+        0
+    );
+}
+
+function projectPoiWaypoint(
+    waypoint,
+    globeWorldPosition,
+    rect
+)
+{
+    const worldPoint =
+        globe.localToWorld(
+            waypoint.localPoint.clone()
+        );
+
+    const outwardNormal =
+        worldPoint.clone()
+            .sub(globeWorldPosition)
+            .normalize();
+
+    const toCamera =
+        camera.position.clone()
+            .sub(worldPoint)
+            .normalize();
+
+    const projected =
+        worldPoint.clone()
+            .project(camera);
+
+    return {
+        visible:
+            outwardNormal.dot(
+                toCamera
+            ) > 0.02 &&
+            projected.z >= -1 &&
+            projected.z <= 1 &&
+            projected.x >= -1.1 &&
+            projected.x <= 1.1 &&
+            projected.y >= -1.1 &&
+            projected.y <= 1.1,
+
+        x:
+            rect.left +
+            (projected.x * 0.5 + 0.5) *
+            rect.width,
+
+        y:
+            rect.top +
+            (-projected.y * 0.5 + 0.5) *
+            rect.height
+    };
+}
+
+function drawRouteSegment(
+    points,
+    strokeStyle,
+    lineWidth
+)
+{
+    if (
+        points.length < 2
+    )
+    {
+        return;
+    }
+
+    poiRouteContext.beginPath();
+
+    poiRouteContext.moveTo(
+        points[0].x,
+        points[0].y
+    );
+
+    for (
+        let index = 1;
+        index < points.length;
+        index += 1
+    )
+    {
+        poiRouteContext.lineTo(
+            points[index].x,
+            points[index].y
+        );
+    }
+
+    poiRouteContext.strokeStyle =
+        strokeStyle;
+
+    poiRouteContext.lineWidth =
+        lineWidth;
+
+    poiRouteContext.lineJoin =
+        "round";
+
+    poiRouteContext.lineCap =
+        "round";
+
+    poiRouteContext.stroke();
+}
+
+function updatePoiScreenPositions()
+{
+    poiRouteContext.clearRect(
+        0,
+        0,
+        window.innerWidth,
+        window.innerHeight
+    );
+
+    if (!poiToggle.checked)
+    {
+        return;
+    }
+
+    const globeWorldPosition =
+        new THREE.Vector3();
+
+    globe.getWorldPosition(
+        globeWorldPosition
+    );
+
+    const rect =
+        renderer.domElement.getBoundingClientRect();
+
+    for (
+        const entry of
+        currentPointsOfInterest
+    )
+    {
+        const projectedWaypoints =
+            entry.waypoints.map(
+                waypoint =>
+                    projectPoiWaypoint(
+                        waypoint,
+                        globeWorldPosition,
+                        rect
+                    )
+            );
+
+        for (
+            let index = 0;
+            index < entry.waypoints.length;
+            index += 1
+        )
+        {
+            const waypoint =
+                entry.waypoints[index];
+
+            const projected =
+                projectedWaypoints[index];
+
+            if (
+                !waypoint.element ||
+                !projected.visible
+            )
+            {
+                if (waypoint.element)
+                {
+                    waypoint.element.style.display =
+                        "none";
+                }
+
+                continue;
+            }
+
+            waypoint.element.style.display =
+                "block";
+
+            waypoint.element.style.left =
+                projected.x +
+                "px";
+
+            waypoint.element.style.top =
+                projected.y +
+                "px";
+        }
+
+        if (!entry.isRoute)
+        {
+            continue;
+        }
+
+        let visibleRun = [];
+
+        const flushVisibleRun =
+            () =>
+            {
+                if (
+                    visibleRun.length >= 2
+                )
+                {
+                    drawRouteSegment(
+                        visibleRun,
+                        "#000",
+                        5
+                    );
+
+                    drawRouteSegment(
+                        visibleRun,
+                        "#fff",
+                        2
+                    );
+                }
+
+                visibleRun = [];
+            };
+
+        for (
+            const projected of
+            projectedWaypoints
+        )
+        {
+            if (projected.visible)
+            {
+                visibleRun.push(
+                    projected
+                );
+            }
+            else
+            {
+                flushVisibleRun();
+            }
+        }
+
+        flushVisibleRun();
+    }
+}
+
+function updateHudTitle()
+{
+    const planetLabel =
+        PLANETS[currentPlanetKey].label;
+
+    const gateLabel =
+        gateTypeSelect?.value === "typeIa"
+            ? "Type I(a)"
+            : "Type I(b)";
+
+    document.getElementById(
+        "hud-title"
+    ).textContent =
+        planetLabel +
+        " " +
+        gateLabel +
+        " Energy Layer";
+}
+
+async function replaceSurfaceTexture(
+    textureUrl
+)
+{
+    const replacement =
+        await loadSurfaceTexture(
+            textureUrl
+        );
+
+    const previous =
+        surfaceTexture;
+
+    surfaceTexture =
+        replacement;
+
+    material.map =
+        surfaceTexture;
+
+    material.needsUpdate =
+        true;
+
+    if (
+        previous &&
+        previous !== replacement
+    )
+    {
+        previous.dispose();
+    }
+}
+
+async function loadPlanet(
+    planetKey
+)
+{
+    const config =
+        PLANETS[planetKey];
+
+    if (!config)
+    {
+        throw new Error(
+            "Unknown planet: " +
+            planetKey
+        );
+    }
+
+    const generation =
+        ++atlasLoadGeneration;
+
+    setAtlasControlsDisabled(
+        true
+    );
+
+    loadingStatusElement.textContent =
+        "Loading " +
+        config.label +
+        "…";
+
+    clearOrigin();
+
+    try
+    {
+        const [
+            replacementRaster,
+            replacementTexture,
+            replacementPointsOfInterest
+        ] =
+            await Promise.all(
+            [
+                loadEnergyRaster(
+                    config.dataBaseUrl
+                ),
+
+                loadSurfaceTexture(
+                    config.textures[
+                        currentLayerKey
+                    ]
+                ),
+
+                loadPoiFile(
+                    config.poiFile
+                )
+            ]
+        );
+
+        /*
+            Ignore a stale request if another planet load started while these
+            files were downloading.
+        */
+        if (
+            generation !==
+            atlasLoadGeneration
+        )
+        {
+            replacementRaster.texture.dispose();
+            replacementTexture.dispose();
+            return;
+        }
+
+        const previousRaster =
+            energyRaster;
+
+        const previousTexture =
+            surfaceTexture;
+
+        energyRaster =
+            replacementRaster;
+
+        surfaceTexture =
+            replacementTexture;
+
+        currentPointsOfInterest =
+            replacementPointsOfInterest;
+
+        currentPlanetKey =
+            planetKey;
+
+        energyUniforms.energyTexture.value =
+            energyRaster.texture;
+
+        material.map =
+            surfaceTexture;
+
+        material.needsUpdate =
+            true;
+
+        if (previousRaster?.texture)
+        {
+            previousRaster.texture.dispose();
+        }
+
+        if (previousTexture)
+        {
+            previousTexture.dispose();
+        }
+
+        rebuildPoiLabels();
+
+        updateHudTitle();
+
+        document.getElementById(
+            "hud-instruction"
+        ).textContent =
+            "Click the globe to place the origin. Click empty space to clear it.";
+
+        loadingStatusElement.textContent =
+            config.label +
+            " loaded.";
+    }
+    catch (error)
+    {
+        console.error(error);
+
+        planetSelect.value =
+            currentPlanetKey;
+
+        loadingStatusElement.textContent =
+            "Could not load " +
+            config.label +
+            ". See console.";
+    }
+    finally
+    {
+        if (
+            generation ===
+            atlasLoadGeneration
+        )
+        {
+            setAtlasControlsDisabled(
+                false
+            );
+        }
+    }
+}
+
+async function loadLayer(
+    layerKey
+)
+{
+    const config =
+        PLANETS[currentPlanetKey];
+
+    const textureUrl =
+        config.textures[
+            layerKey
+        ];
+
+    if (!textureUrl)
+    {
+        throw new Error(
+            "Unknown surface layer: " +
+            layerKey
+        );
+    }
+
+    setAtlasControlsDisabled(
+        true
+    );
+
+    loadingStatusElement.textContent =
+        "Loading surface layer…";
+
+    try
+    {
+        await replaceSurfaceTexture(
+            textureUrl
+        );
+
+        currentLayerKey =
+            layerKey;
+
+        loadingStatusElement.textContent =
+            "Surface layer loaded.";
+    }
+    catch (error)
+    {
+        console.error(error);
+
+        layerSelect.value =
+            currentLayerKey;
+
+        loadingStatusElement.textContent =
+            "Could not load surface layer. See console.";
+    }
+    finally
+    {
+        setAtlasControlsDisabled(
+            false
+        );
+    }
+}
+
+function resetView()
+{
+    clearOrigin();
+
+    camera.position.copy(
+        DEFAULT_CAMERA_POSITION
+    );
+
+    camera.up.set(
+        0,
+        1,
+        0
+    );
+
+    controls.target.set(
+        0,
+        0,
+        0
+    );
+
+    controls.update();
+}
+
+planetSelect.addEventListener(
+    "change",
+    event =>
+    {
+        loadPlanet(
+            event.target.value
+        );
+    }
+);
+
+layerSelect.addEventListener(
+    "change",
+    event =>
+    {
+        loadLayer(
+            event.target.value
+        );
+    }
+);
+
+gateTypeSelect.addEventListener(
+    "change",
+    event =>
+    {
+        const typeIaActive =
+            event.target.value ===
+            "typeIa";
+
+        energyUniforms.gateType.value =
+            typeIaActive
+                ? 1.0
+                : 0.0;
+
+        updateHudTitle();
+
+        document.getElementById(
+            "hud-instruction"
+        ).textContent =
+            typeIaActive
+                ? "Type I(a): yellow marks destinations within ±0.01 °C equivalent energy of the origin."
+                : "Type I(b): colors show thermal change from the selected origin.";
+    }
+);
+
+oceanEnergyToggle.addEventListener(
+    "change",
+    event =>
+    {
+        energyUniforms.showOceanEnergy.value =
+            event.target.checked
+                ? 1.0
+                : 0.0;
+    }
+);
+
+poiToggle.addEventListener(
+    "change",
+    updatePoiVisibility
+);
+
+resetViewButton.addEventListener(
+    "click",
+    resetView
+);
+
+resizePoiRouteCanvas();
+
+rebuildPoiLabels();
+
+updateHudTitle();
+
+//////////////////////////////////////////////////////////////
+// Origin pin
+//////////////////////////////////////////////////////////////
+
+const pin =
+    new THREE.Group();
+
+pin.visible = false;
+
+const PIN_SCALE = 0.25;    // 45% of current size
+
+// Pin head.
+const head =
+    new THREE.Mesh(
+        new THREE.SphereGeometry(
+            0.045,
+            24,
+            16
+        ),
+        new THREE.MeshStandardMaterial(
+        {
+            color: 0xff3b30,
+            emissive: 0x4a0805,
+            roughness: 0.42
+        })
+    );
+
+head.position.y = 0.13;
+
+pin.add(head);
+
+// Pin stem/tip. The cone points down toward the selected surface point.
+const tip =
+    new THREE.Mesh(
+        new THREE.ConeGeometry(
+            0.035,
+            0.18,
+            24
+        ),
+        new THREE.MeshStandardMaterial(
+        {
+            color: 0xf1f3f5,
+            roughness: 0.55
+        })
+    );
+
+tip.position.y = 0.06;
+
+pin.add(tip);
+
+// A subtle ring shows the exact selected point.
+const foot =
+    new THREE.Mesh(
+        new THREE.TorusGeometry(
+            0.035,
+            0.006,
+            12,
+            36
+        ),
+        new THREE.MeshBasicMaterial(
+        {
+            color: 0xffffff
+        })
+    );
+
+foot.rotation.x = Math.PI / 2;
+foot.position.y = 0.006;
+
+pin.add(foot);
+
+pin.scale.setScalar(PIN_SCALE);
+
+// Attach the pin to the globe so future globe transforms carry it along.
+globe.add(pin);
+
+//////////////////////////////////////////////////////////////
+// Picking
+//////////////////////////////////////////////////////////////
+
+const raycaster =
+    new THREE.Raycaster();
+
+const pointerNdc =
+    new THREE.Vector2();
+
+const pointerDown =
+{
+    x: 0,
+    y: 0,
+    time: 0
+};
+
+const CLICK_DISTANCE_PX = 5;
+const CLICK_TIME_MS = 500;
+const PIN_SURFACE_OFFSET = 0.002;
+
+const origin =
+{
+    latitudeDeg: null,
+    longitudeDeg: null,
+    storedEnergyJPerKg: null,
+    encodedEnergyJPerKg: null,
+    isOcean: null,
+    localSurfacePoint: new THREE.Vector3()
+};
+
+const latitudeElement =
+    document.getElementById("origin-latitude");
+
+const longitudeElement =
+    document.getElementById("origin-longitude");
+
+const originEnergyElement =
+    document.getElementById("origin-energy");
+
+const cursorDeltaEnergyElement =
+    document.getElementById("cursor-delta-energy");
+
+renderer.domElement.addEventListener(
+    "pointerdown",
+    event =>
+    {
+        pointerDown.x = event.clientX;
+        pointerDown.y = event.clientY;
+        pointerDown.time = performance.now();
+    }
+);
+
+renderer.domElement.addEventListener(
+    "pointerup",
+    event =>
+    {
+        const distance =
+            Math.hypot(
+                event.clientX - pointerDown.x,
+                event.clientY - pointerDown.y
+            );
+
+        const duration =
+            performance.now() - pointerDown.time;
+
+        // A camera orbit should not accidentally move the pin.
+        if (
+            distance > CLICK_DISTANCE_PX ||
+            duration > CLICK_TIME_MS
+        )
+        {
+            return;
+        }
+
+        selectOriginFromClick(
+            event.clientX,
+            event.clientY
+        );
+    }
+);
+
+function selectOriginFromClick(
+    clientX,
+    clientY
+)
+{
+    const rect =
+        renderer.domElement.getBoundingClientRect();
+
+    pointerNdc.x =
+        ((clientX - rect.left) / rect.width) * 2 - 1;
+
+    pointerNdc.y =
+        -((clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(
+        pointerNdc,
+        camera
+    );
+
+    const intersections =
+        raycaster.intersectObject(
+            globe,
+            false
+        );
+
+    if (intersections.length === 0)
+    {
+        clearOrigin();
+        return;
+    }
+
+    const worldPoint =
+        intersections[0].point.clone();
+
+    // Convert the picked point into globe-local coordinates.
+    const localPoint =
+        globe.worldToLocal(
+            worldPoint.clone()
+        );
+
+    const surfaceNormal =
+        localPoint.clone().normalize();
+
+    origin.localSurfacePoint.copy(
+        surfaceNormal
+    );
+
+    // Position the pin slightly above the sphere to prevent z-fighting.
+    pin.position.copy(
+        surfaceNormal.clone().multiplyScalar(
+            1 + PIN_SURFACE_OFFSET
+        )
+    );
+
+    // The pin is modeled along local +Y. Align +Y with the surface normal.
+    pin.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        surfaceNormal
+    );
+
+    pin.visible = true;
+
+    const coordinates =
+        localPointToLatitudeLongitude(
+            surfaceNormal
+        );
+
+    origin.latitudeDeg =
+        coordinates.latitudeDeg;
+
+    origin.longitudeDeg =
+        coordinates.longitudeDeg;
+
+    const originSample =
+        energySampleAtLocalPoint(
+            surfaceNormal
+        );
+
+    origin.encodedEnergyJPerKg =
+        originSample.encoded;
+
+    origin.storedEnergyJPerKg =
+        originSample.energy;
+
+    origin.isOcean =
+        originSample.isOcean;
+
+    energyUniforms.originEnergy.value =
+        originSample.energy;
+
+    energyUniforms.layerActive.value =
+        1.0;
+
+    updateOriginHud();
+}
+
+function energyRasterCoordinatesFromLocalPoint(
+    point
+)
+{
+    const normalized =
+        point.clone().normalize();
+
+    const longitude =
+        Math.atan2(
+            -normalized.z,
+            normalized.x
+        );
+
+    const latitude =
+        Math.asin(
+            THREE.MathUtils.clamp(
+                normalized.y,
+                -1,
+                1
+            )
+        );
+
+    const u =
+        (
+            longitude +
+            Math.PI
+        ) /
+        (
+            2 *
+            Math.PI
+        );
+
+    const v =
+        (
+            0.5 *
+            Math.PI -
+            latitude
+        ) /
+        Math.PI;
+
+    return {
+        u:
+            (
+                u %
+                1 +
+                1
+            ) %
+            1,
+
+        v:
+            THREE.MathUtils.clamp(
+                v,
+                0,
+                1
+            )
+    };
+}
+
+function energySampleAtLocalPoint(
+    point
+)
+{
+    const coordinates =
+        energyRasterCoordinatesFromLocalPoint(
+            point
+        );
+
+    /*
+        Match the GPU's current NearestFilter behavior.
+    */
+    const x =
+        Math.min(
+            energyRaster.width - 1,
+            Math.floor(
+                coordinates.u *
+                energyRaster.width
+            )
+        );
+
+    const y =
+        Math.min(
+            energyRaster.height - 1,
+            Math.floor(
+                coordinates.v *
+                energyRaster.height
+            )
+        );
+
+    const encoded =
+        energyRaster.values[
+            y *
+            energyRaster.width +
+            x
+        ];
+
+    return {
+        encoded,
+        energy: Math.abs(encoded),
+        isOcean: encoded < 0
+    };
+}
+
+function clearOrigin()
+{
+    pin.visible = false;
+
+    origin.latitudeDeg = null;
+    origin.longitudeDeg = null;
+    origin.storedEnergyJPerKg = null;
+    origin.encodedEnergyJPerKg = null;
+    origin.isOcean = null;
+    origin.localSurfacePoint.set(0, 0, 0);
+
+    energyUniforms.layerActive.value =
+        0.0;
+
+    latitudeElement.textContent = "—";
+    longitudeElement.textContent = "—";
+    originEnergyElement.textContent = "—";
+    cursorDeltaEnergyElement.textContent = "—";
+}
+
+function formatSpecificEnergy(
+    value
+)
+{
+    return (
+        value.toLocaleString(
+            undefined,
+            {
+                maximumFractionDigits: 1
+            }
+        ) +
+        " J/kg"
+    );
+}
+
+function formatDeltaTemperature(
+    value,
+    includeSign = false
+)
+{
+    const sign =
+        includeSign && value > 0
+            ? "+"
+            : "";
+
+    return (
+        sign +
+        value.toFixed(3) +
+        " °C"
+    );
+}
+
+function localPointToLatitudeLongitude(
+    point
+)
+{
+    const normalized =
+        point.clone().normalize();
+
+    const latitudeDeg =
+        THREE.MathUtils.radToDeg(
+            Math.asin(
+                THREE.MathUtils.clamp(
+                    normalized.y,
+                    -1,
+                    1
+                )
+            )
+        );
+
+    /*
+        Three.js SphereGeometry maps:
+
+            longitude 0°   -> +X
+            longitude 90°E -> -Z
+            longitude 90°W -> +Z
+
+        atan2(-z, x) therefore produces east-positive longitude.
+    */
+    let longitudeDeg =
+        THREE.MathUtils.radToDeg(
+            Math.atan2(
+                -normalized.z,
+                normalized.x
+            )
+        );
+
+    // Keep longitude in [-180, 180).
+    if (longitudeDeg >= 180)
+    {
+        longitudeDeg -= 360;
+    }
+
+    return {
+        latitudeDeg,
+        longitudeDeg
+    };
+}
+
+function formatLatitude(
+    latitudeDeg
+)
+{
+    const hemisphere =
+        latitudeDeg >= 0 ? "N" : "S";
+
+    return (
+        Math.abs(latitudeDeg).toFixed(4) +
+        "° " +
+        hemisphere
+    );
+}
+
+function formatLongitude(
+    longitudeDeg
+)
+{
+    const hemisphere =
+        longitudeDeg >= 0 ? "E" : "W";
+
+    return (
+        Math.abs(longitudeDeg).toFixed(4) +
+        "° " +
+        hemisphere
+    );
+}
+
+function updateOriginHud()
+{
+    latitudeElement.textContent =
+        formatLatitude(
+            origin.latitudeDeg
+        );
+
+    longitudeElement.textContent =
+        formatLongitude(
+            origin.longitudeDeg
+        );
+
+    originEnergyElement.textContent =
+        formatSpecificEnergy(
+            origin.storedEnergyJPerKg
+        );
+
+    cursorDeltaEnergyElement.textContent =
+        "Move over globe";
+}
+
+//////////////////////////////////////////////////////////////
+// Cursor relative-value sampling
+//////////////////////////////////////////////////////////////
+
+renderer.domElement.addEventListener(
+    "pointermove",
+    event =>
+    {
+        if (
+            energyUniforms.layerActive.value < 0.5 ||
+            event.buttons !== 0
+        )
+        {
+            if (event.buttons !== 0)
+            {
+                cursorDeltaEnergyElement.textContent =
+                    "—";
+            }
+
+            return;
+        }
+
+        const localPoint =
+            pickGlobeLocalPoint(
+                event.clientX,
+                event.clientY
+            );
+
+        if (localPoint === null)
+        {
+            cursorDeltaEnergyElement.textContent =
+                "—";
+
+            return;
+        }
+
+        const destinationSample =
+            energySampleAtLocalPoint(
+                localPoint
+            );
+
+        const releasedEnergy =
+            origin.storedEnergyJPerKg -
+            destinationSample.energy;
+
+        const delta =
+            releasedEnergy /
+            SPECIFIC_HEAT_J_PER_KG_K;
+
+        cursorDeltaEnergyElement.textContent =
+            formatDeltaTemperature(
+                delta,
+                true
+            );
+    }
+);
+
+renderer.domElement.addEventListener(
+    "pointerleave",
+    () =>
+    {
+        cursorDeltaEnergyElement.textContent =
+            "—";
+    }
+);
+
+function pickGlobeLocalPoint(
+    clientX,
+    clientY
+)
+{
+    const rect =
+        renderer.domElement.getBoundingClientRect();
+
+    pointerNdc.x =
+        ((clientX - rect.left) / rect.width) * 2 - 1;
+
+    pointerNdc.y =
+        -((clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(
+        pointerNdc,
+        camera
+    );
+
+    const intersections =
+        raycaster.intersectObject(
+            globe,
+            false
+        );
+
+    if (intersections.length === 0)
+    {
+        return null;
+    }
+
+    return globe.worldToLocal(
+        intersections[0].point.clone()
+    ).normalize();
+}
+
+//////////////////////////////////////////////////////////////
+// Resize
+//////////////////////////////////////////////////////////////
+
+window.addEventListener(
+    "resize",
+    () =>
+    {
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+        resizePoiRouteCanvas();
+    }
+);
+
+//////////////////////////////////////////////////////////////
+// Animation
+//////////////////////////////////////////////////////////////
+
+function animate()
+{
+    requestAnimationFrame(
+        animate
+    );
+
+    controls.update();
+
+    updatePoiScreenPositions();
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+animate();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+Olympus Mons / 18.6000 N / 226.2000 E
+Valles Marineris / 13.9000 S / 300.0000 E
+Jezero Crater / 18.4000 N / 77.5000 E
+Gale Crater / 5.4000 S / 137.8000 E
+Hellas Planitia / 42.4000 S / 70.5000 E
+Airy-0 / 5.1000 S / 0.0000 E
+Face on Mars (Cydonia) / 40.7000 N / 350.6000 E
+Elysium Mons / 25.0000 N / 147.2000 E
+Arsia Mons / 8.4000 S / 239.1000 E
+Pavonis Mons / 1.4000 N / 247.0000 E
+Ascraeus Mons / 11.9000 N / 248.0000 E
+Tharsis Tholus / 13.5000 N / 269.2000 E
+Gusev Crater / 14.6000 S / 175.4000 E
+Planum Boreum / 88.0000 N / 180.0000 E
+Planum Australe / 83.9000 S / 160.0000 E
+Argyre Planitia / 49.7000 S / 318.4000 E
+Chryse Planitia / 28.4000 N / 310.0000 E
+Isidis Planitia / 12.9000 N / 87.0000 E
+Schiapparelli Crater / 2.7000 S / 16.8000 E
+Utopia Planitia / 46.7000 N / 117.5000 E

@@ -1,0 +1,58 @@
+{
+  "file": "total_energy_j_per_kg.f32",
+  "dtype": "float32",
+  "endianness": "little",
+  "layout": "row-major",
+  "shape": [
+    2161,
+    4320
+  ],
+  "width": 4320,
+  "height": 2161,
+  "units": "J/kg",
+  "quantity": "specific mechanical energy",
+  "components": [
+    "gravitational potential",
+    "surface rotational kinetic energy"
+  ],
+  "stored_value_definition": "sign * (physical_energy_j_per_kg - energy_offset_j_per_kg)",
+  "stored_value_sign_encoding": {
+    "positive": "source elevation > 0 m",
+    "negative": "source elevation <= 0 m; energy evaluated at 0 m",
+    "decode_energy": "abs(stored_value)",
+    "render_land_only": "discard stored_value < 0"
+  },
+  "surface_elevation_policy": {
+    "energy_calculation": "negative elevations clamped to 0 m",
+    "ocean_flag": "original elevation <= 0 m",
+    "sea_level_m": 0.0
+  },
+  "storage_floor_margin_j_per_kg": 1.0,
+  "energy_offset_j_per_kg": -62565146.91115994,
+  "mass_kg": 5.9722e+24,
+  "mean_radius_m": 6371000.0,
+  "sidereal_rotation_period_s": 86164.0905,
+  "minimum_encoded_value": -107918.6171875,
+  "maximum_encoded_value": 157791.71875,
+  "minimum_decoded_stored_j_per_kg": 1.0,
+  "maximum_decoded_stored_j_per_kg": 157791.71136251092,
+  "ocean_cell_count": 6293416,
+  "above_sea_level_cell_count": 3042104,
+  "minimum_physical_j_per_kg": -62565145.91115994,
+  "maximum_physical_j_per_kg": -62407355.19979743,
+  "latitude_array_shape": [
+    2161
+  ],
+  "longitude_array_shape": [
+    4320
+  ],
+  "elevation_array_shape": [
+    2161,
+    4320
+  ],
+  "delta_sign_convention": {
+    "released_energy_j_per_kg": "abs(origin_stored_energy) - abs(destination_stored_energy)",
+    "positive_delta_t": "heating",
+    "negative_delta_t": "cooling"
+  }
+}
