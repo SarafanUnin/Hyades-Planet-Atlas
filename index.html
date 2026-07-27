@@ -530,6 +530,7 @@ const sun =
 sun.position.set(5, 2, 5);
 
 scene.add(sun);
+scene.add(sun.target);
 
 //////////////////////////////////////////////////////////////
 // Globe
@@ -2952,6 +2953,22 @@ function animate()
     );
 
     controls.update();
+
+    skySphere.position.copy(
+        camera.position
+    );
+
+    sun.position.copy(
+        camera.position
+    );
+
+    sun.target.position.set(
+        0,
+        0,
+        0
+    );
+
+    sun.target.updateMatrixWorld();
 
     updatePoiScreenPositions();
 
