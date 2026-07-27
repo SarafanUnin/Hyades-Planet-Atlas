@@ -613,6 +613,7 @@ const PLANETS =
     earth:
     {
         label: "Earth",
+        skyTexture: "textures/tycho_sky.jpg",
         dataBaseUrl: "data/earth/",
         poiFile: "data/earth/POI.txt",
         textures:
@@ -626,6 +627,7 @@ const PLANETS =
     mars:
     {
         label: "Mars",
+        skyTexture: "textures/tycho_sky.jpg",
         dataBaseUrl: "data/mars/",
         poiFile: "data/mars/POI.txt",
         textures:
@@ -639,6 +641,7 @@ const PLANETS =
     cleeia:
     {
         label: "Cleeia",
+        skyTexture: "textures/randomized_sky.jpg",
         dataBaseUrl: "data/cleeia/",
         poiFile: "data/cleeia/POI.txt",
         textures:
@@ -652,6 +655,7 @@ const PLANETS =
     synecho:
     {
         label: "Synecho",
+        skyTexture: "textures/randomized_sky.jpg",
         dataBaseUrl: "data/synecho/",
         poiFile: "data/synecho/POI.txt",
         textures:
@@ -1059,6 +1063,22 @@ function loadSurfaceTexture(
     );
 }
 
+let currentSkyTexture = null;
+
+const skyGeometry = new THREE.SphereGeometry(500,96,48);
+const skyMaterial = new THREE.MeshBasicMaterial({side: THREE.BackSide});
+const skySphere = new THREE.Mesh(skyGeometry, skyMaterial);
+scene.add(skySphere);
+
+async function replaceSkyTexture(textureUrl)
+{
+    const texture = await loadSurfaceTexture(textureUrl);
+    if(currentSkyTexture) currentSkyTexture.dispose();
+    currentSkyTexture = texture;
+    skyMaterial.map = texture;
+    skyMaterial.needsUpdate = true;
+}
+
 let currentPlanetKey =
     DEFAULT_PLANET_KEY;
 
@@ -1075,6 +1095,8 @@ try
 {
     const initialConfig =
         PLANETS[currentPlanetKey];
+
+    await replaceSkyTexture(initialConfig.skyTexture);
 
     [
         energyRaster,
@@ -2079,6 +2101,8 @@ async function loadPlanet(
         currentPlanetKey =
             planetKey;
 
+        await replaceSkyTexture(config.skyTexture);
+
         energyUniforms.energyTexture.value =
             energyRaster.texture;
 
@@ -2215,6 +2239,8 @@ function resetView()
     );
 
     controls.update();
+
+    skySphere.position.copy(camera.position);
 }
 
 planetSelect.addEventListener(
