@@ -276,33 +276,112 @@ canvas
     color: #fff;
 }
 
-#hud
+
+.atlas-panel
 {
     position: fixed;
-    left: 16px;
-    bottom: 16px;
-    z-index: 10;
-
-    min-width: 260px;
-    padding: 12px 14px;
+    z-index: 20;
 
     color: #f3f6fa;
-    background: rgba(8, 12, 18, 0.78);
+    background: rgba(8, 12, 18, 0.82);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 8px;
     backdrop-filter: blur(5px);
 
-    pointer-events: none;
+    font-size: 0.88rem;
+    line-height: 1.35;
     user-select: none;
 }
 
-#hud-title
+.atlas-panel > summary
 {
-    margin-bottom: 6px;
-    font-weight: 650;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 10px 12px;
+    cursor: pointer;
+    list-style: none;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
-#hud-instruction
+.atlas-panel > summary::-webkit-details-marker
+{
+    display: none;
+}
+
+.atlas-panel > summary::before
+{
+    content: "▸";
+    display: inline-block;
+    width: 0.9em;
+    transform-origin: 45% 50%;
+    transition: transform 120ms ease;
+}
+
+.atlas-panel[open] > summary::before
+{
+    transform: rotate(90deg);
+}
+
+.panel-content
+{
+    padding: 0 12px 12px 12px;
+}
+
+#controls-panel
+{
+    top: 16px;
+    left: 16px;
+    width: 250px;
+}
+
+#origin-panel
+{
+    left: 16px;
+    bottom: 16px;
+    min-width: 300px;
+}
+
+#destination-panel
+{
+    top: 16px;
+    right: 16px;
+    min-width: 330px;
+}
+
+#credits-panel
+{
+    right: 14px;
+    bottom: 14px;
+    max-width: min(440px, calc(100vw - 28px));
+    font-size: 0.78rem;
+}
+
+#credits-content
+{
+    box-sizing: border-box;
+    max-height: min(50vh, 520px);
+    overflow: auto;
+    padding: 0 10px 10px 10px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    user-select: text;
+}
+
+#credits-content a
+{
+    color: #b9d7ff;
+    text-decoration: underline;
+}
+
+#credits-content a:hover
+{
+    color: #fff;
+}
+
+#origin-instruction
 {
     margin-bottom: 8px;
     color: #b9c4d0;
@@ -325,6 +404,36 @@ canvas
 .hud-value
 {
     color: #fff;
+    text-align: right;
+}
+
+.destination-note
+{
+    margin-top: 8px;
+    color: #9eabb8;
+    font-size: 0.75rem;
+}
+
+
+@media (max-width: 760px)
+{
+    #controls-panel
+    {
+        width: min(250px, calc(100vw - 32px));
+    }
+
+    #destination-panel
+    {
+        top: auto;
+        right: 16px;
+        bottom: 16px;
+        min-width: min(330px, calc(100vw - 32px));
+    }
+
+    #origin-panel
+    {
+        min-width: min(300px, calc(100vw - 32px));
+    }
 }
 
 </style>
@@ -346,8 +455,9 @@ canvas
 
 <body>
 
-<div id="controls-panel">
-    <div id="controls-title">Planet Atlas</div>
+<details id="controls-panel" class="atlas-panel" open>
+    <summary>Planet Atlas</summary>
+    <div class="panel-content">
 
     <div class="control-group">
         <label class="control-label" for="planet-select">
@@ -406,12 +516,13 @@ canvas
     </div>
 
     <div id="loading-status" aria-live="polite"></div>
-</div>
+    </div>
+</details>
 
 
 <div id="poi-layer" aria-hidden="true"><canvas id="poi-route-canvas"></canvas></div>
 
-<details id="credits-panel">
+<details id="credits-panel" class="atlas-panel">
     <summary id="credits-summary">
         Imagery &amp; data credits
     </summary>
@@ -421,32 +532,67 @@ canvas
     </div>
 </details>
 
-<div id="hud">
-    <div id="hud-title">Earth Energy-Raster ΔT Layer</div>
-    <div id="hud-instruction">
-        Loading Earth energy raster…
-    </div>
+<details id="origin-panel" class="atlas-panel" open>
+    <summary id="origin-panel-title">Earth Type I(b) Energy Layer</summary>
 
-    <div class="hud-row">
-        <span class="hud-label">Origin latitude</span>
-        <span class="hud-value" id="origin-latitude">—</span>
-    </div>
+    <div class="panel-content">
+        <div id="origin-instruction">
+            Loading Earth energy raster…
+        </div>
 
-    <div class="hud-row">
-        <span class="hud-label">Origin longitude</span>
-        <span class="hud-value" id="origin-longitude">—</span>
-    </div>
+        <div class="hud-row">
+            <span class="hud-label">Origin latitude</span>
+            <span class="hud-value" id="origin-latitude">—</span>
+        </div>
 
-    <div class="hud-row">
-        <span class="hud-label">Origin energy</span>
-        <span class="hud-value" id="origin-energy">—</span>
-    </div>
+        <div class="hud-row">
+            <span class="hud-label">Origin longitude</span>
+            <span class="hud-value" id="origin-longitude">—</span>
+        </div>
 
-    <div class="hud-row">
-        <span class="hud-label">Cursor ΔT</span>
-        <span class="hud-value" id="cursor-delta-energy">—</span>
+        <div class="hud-row">
+            <span class="hud-label">Origin energy</span>
+            <span class="hud-value" id="origin-energy">—</span>
+        </div>
     </div>
-</div>
+</details>
+
+<details id="destination-panel" class="atlas-panel" open>
+    <summary>Destination</summary>
+
+    <div class="panel-content">
+        <div class="hud-row">
+            <span class="hud-label">Latitude</span>
+            <span class="hud-value" id="destination-latitude">—</span>
+        </div>
+
+        <div class="hud-row">
+            <span class="hud-label">Longitude</span>
+            <span class="hud-value" id="destination-longitude">—</span>
+        </div>
+
+        <div class="hud-row">
+            <span class="hud-label">Δ specific energy</span>
+            <span class="hud-value" id="destination-delta-energy">—</span>
+        </div>
+
+        <div class="hud-row">
+            <span class="hud-label">Equivalent ΔT</span>
+            <span class="hud-value" id="destination-delta-temperature">—</span>
+        </div>
+
+        <div class="hud-row">
+            <span class="hud-label">Equivalent Δv</span>
+            <span class="hud-value" id="destination-delta-velocity">—</span>
+        </div>
+
+        <div class="hud-row">
+            <span class="hud-label">Equivalent Δh</span>
+            <span class="hud-value" id="destination-delta-height">—</span>
+        </div>
+
+    </div>
+</details>
 
 <script type="module">
 
@@ -614,6 +760,7 @@ const PLANETS =
     earth:
     {
         label: "Earth",
+        surfaceGravityMps2: 9.80665,
         skyTexture: "textures/tycho_sky.jpg",
         dataBaseUrl: "data/earth/",
         poiFile: "data/earth/POI.txt",
@@ -628,6 +775,7 @@ const PLANETS =
     mars:
     {
         label: "Mars",
+        surfaceGravityMps2: 3.72076,
         skyTexture: "textures/tycho_sky.jpg",
         dataBaseUrl: "data/mars/",
         poiFile: "data/mars/POI.txt",
@@ -642,6 +790,7 @@ const PLANETS =
     cleeia:
     {
         label: "Cleeia",
+        surfaceGravityMps2: 9.302,
         skyTexture: "textures/randomized_sky.jpg",
         dataBaseUrl: "data/cleeia/",
         poiFile: "data/cleeia/POI.txt",
@@ -656,6 +805,7 @@ const PLANETS =
     synecho:
     {
         label: "Synecho",
+        surfaceGravityMps2: 10.135,
         skyTexture: "textures/randomized_sky.jpg",
         dataBaseUrl: "data/synecho/",
         poiFile: "data/synecho/POI.txt",
@@ -1123,7 +1273,7 @@ try
     );
 
     document.getElementById(
-        "hud-instruction"
+        "origin-instruction"
     ).textContent =
         "Click the globe to place the origin. Click empty space to clear it.";
 }
@@ -1132,7 +1282,7 @@ catch (error)
     console.error(error);
 
     document.getElementById(
-        "hud-instruction"
+        "origin-instruction"
     ).textContent =
         "Initial atlas assets failed to load. See browser console.";
 
@@ -1978,7 +2128,7 @@ function updateHudTitle()
             : "Type I(b)";
 
     document.getElementById(
-        "hud-title"
+        "origin-panel-title"
     ).textContent =
         planetLabel +
         " " +
@@ -2128,7 +2278,7 @@ async function loadPlanet(
         updateHudTitle();
 
         document.getElementById(
-            "hud-instruction"
+            "origin-instruction"
         ).textContent =
             "Click the globe to place the origin. Click empty space to clear it.";
 
@@ -2280,7 +2430,7 @@ gateTypeSelect.addEventListener(
         updateHudTitle();
 
         document.getElementById(
-            "hud-instruction"
+            "origin-instruction"
         ).textContent =
             typeIaActive
                 ? "Type I(a): yellow marks destinations within ±0.01 °C equivalent energy of the origin."
@@ -2430,8 +2580,23 @@ const longitudeElement =
 const originEnergyElement =
     document.getElementById("origin-energy");
 
-const cursorDeltaEnergyElement =
-    document.getElementById("cursor-delta-energy");
+const destinationLatitudeElement =
+    document.getElementById("destination-latitude");
+
+const destinationLongitudeElement =
+    document.getElementById("destination-longitude");
+
+const destinationDeltaEnergyElement =
+    document.getElementById("destination-delta-energy");
+
+const destinationDeltaTemperatureElement =
+    document.getElementById("destination-delta-temperature");
+
+const destinationDeltaVelocityElement =
+    document.getElementById("destination-delta-velocity");
+
+const destinationDeltaHeightElement =
+    document.getElementById("destination-delta-height");
 
 renderer.domElement.addEventListener(
     "pointerdown",
@@ -2687,7 +2852,7 @@ function clearOrigin()
     latitudeElement.textContent = "—";
     longitudeElement.textContent = "—";
     originEnergyElement.textContent = "—";
-    cursorDeltaEnergyElement.textContent = "—";
+    clearDestinationHud();
 }
 
 function formatSpecificEnergy(
@@ -2703,6 +2868,73 @@ function formatSpecificEnergy(
         ) +
         " J/kg"
     );
+}
+
+
+function clearDestinationHud()
+{
+    destinationLatitudeElement.textContent = "—";
+    destinationLongitudeElement.textContent = "—";
+    destinationDeltaEnergyElement.textContent = "—";
+    destinationDeltaTemperatureElement.textContent = "—";
+    destinationDeltaVelocityElement.textContent = "—";
+    destinationDeltaHeightElement.textContent = "—";
+}
+
+function formatSignedValue(
+    value,
+    fractionDigits,
+    unit
+)
+{
+    const rounded =
+        Math.abs(value) < Math.pow(10, -fractionDigits) / 2
+            ? 0
+            : value;
+
+    const sign =
+        rounded > 0
+            ? "+"
+            : "";
+
+    return (
+        sign +
+        rounded.toLocaleString(
+            undefined,
+            {
+                minimumFractionDigits: fractionDigits,
+                maximumFractionDigits: fractionDigits
+            }
+        ) +
+        " " +
+        unit
+    );
+}
+
+function currentSurfaceGravityMps2()
+{
+    const metadata =
+        energyRaster?.metadata ?? {};
+
+    const candidates =
+    [
+        metadata.surface_gravity_m_s2,
+        metadata.surfaceGravityMps2,
+        metadata.gravity_m_s2,
+        PLANETS[currentPlanetKey].surfaceGravityMps2
+    ];
+
+    for (const candidate of candidates)
+    {
+        const value = Number(candidate);
+
+        if (Number.isFinite(value) && value > 0)
+        {
+            return value;
+        }
+    }
+
+    return 9.80665;
 }
 
 function formatDeltaTemperature(
@@ -2814,8 +3046,7 @@ function updateOriginHud()
             origin.storedEnergyJPerKg
         );
 
-    cursorDeltaEnergyElement.textContent =
-        "Move over globe";
+    clearDestinationHud();
 }
 
 //////////////////////////////////////////////////////////////
@@ -2831,12 +3062,7 @@ renderer.domElement.addEventListener(
             event.buttons !== 0
         )
         {
-            if (event.buttons !== 0)
-            {
-                cursorDeltaEnergyElement.textContent =
-                    "—";
-            }
-
+            clearDestinationHud();
             return;
         }
 
@@ -2848,40 +3074,97 @@ renderer.domElement.addEventListener(
 
         if (localPoint === null)
         {
-            cursorDeltaEnergyElement.textContent =
-                "—";
-
+            clearDestinationHud();
             return;
         }
+
+        const destinationCoordinates =
+            localPointToLatitudeLongitude(
+                localPoint
+            );
 
         const destinationSample =
             energySampleAtLocalPoint(
                 localPoint
             );
 
-        const releasedEnergy =
-            origin.storedEnergyJPerKg -
-            destinationSample.energy;
+        /*
+            Positive deltaSpecificEnergy means the destination has more
+            mechanical specific energy than the origin and the traveler must
+            gain energy to become isoenergetic there.
+        */
+        const deltaSpecificEnergy =
+            destinationSample.energy -
+            origin.storedEnergyJPerKg;
 
-        const delta =
-            releasedEnergy /
+        /*
+            Existing Type I(b) convention: positive deltaT means mechanical
+            energy is released into the traveler as heat.
+        */
+        const deltaTemperature =
+            -deltaSpecificEnergy /
             SPECIFIC_HEAT_J_PER_KG_K;
 
-        cursorDeltaEnergyElement.textContent =
+        /*
+            Equivalent speed from |ΔE| = v² / 2. This is an energy-equivalent
+            speed, not a vector maneuver solution.
+        */
+        const deltaVelocity =
+            Math.sign(deltaSpecificEnergy) *
+            Math.sqrt(
+                2 *
+                Math.abs(deltaSpecificEnergy)
+            );
+
+        /*
+            Near-surface gravitational-height equivalent: ΔE = g Δh.
+        */
+        const deltaHeight =
+            deltaSpecificEnergy /
+            currentSurfaceGravityMps2();
+
+        destinationLatitudeElement.textContent =
+            formatLatitude(
+                destinationCoordinates.latitudeDeg
+            );
+
+        destinationLongitudeElement.textContent =
+            formatLongitude(
+                destinationCoordinates.longitudeDeg
+            );
+
+        destinationDeltaEnergyElement.textContent =
+            formatSignedValue(
+                deltaSpecificEnergy,
+                1,
+                "J/kg"
+            );
+
+        destinationDeltaTemperatureElement.textContent =
             formatDeltaTemperature(
-                delta,
+                deltaTemperature,
                 true
+            );
+
+        destinationDeltaVelocityElement.textContent =
+            formatSignedValue(
+                deltaVelocity,
+                2,
+                "m/s"
+            );
+
+        destinationDeltaHeightElement.textContent =
+            formatSignedValue(
+                deltaHeight,
+                1,
+                "m"
             );
     }
 );
 
 renderer.domElement.addEventListener(
     "pointerleave",
-    () =>
-    {
-        cursorDeltaEnergyElement.textContent =
-            "—";
-    }
+    clearDestinationHud
 );
 
 function pickGlobeLocalPoint(
